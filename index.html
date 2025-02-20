@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St Francis Shikoti Mixed Secondary School Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+    <style>
+        body {
+            margin: 0;
+             font-family: 'Poppins', sans-serif;
+            background: #f4f4f4;
+            display: flex;
+        }
+        .sidebar {
+            width: auto;
+            height: 100vh;
+            background: #34495e;
+            color: white;
+            position: fixed;
+            padding-top: 20px;
+            transition: 0.3s;
+            left: 0;
+            overflow-y: auto;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            padding: 15px;
+            cursor: pointer;
+            position: relative;
+        }
+        .sidebar ul li:hover {
+            background: #2c3e50;
+        }
+        .submenu {
+            display: none;
+            list-style: none;
+            padding-left: 20px;
+            background: #2c3e50;
+        }
+        .submenu .sub-item {
+            cursor: pointer;
+            padding: 10px;
+        }
+        .sidebar ul li:hover .submenu {
+            display: block;
+        }
+        .content {
+            margin-left: 260px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .menu-toggle {
+            display: none;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: white;
+            background: green;
+            border: none;
+        }
+        .section {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -260px;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .content {
+                margin-left: 0;
+            }
+        }
+        .form-container {
+           max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px 0px #aaa;
+            margin-top: 20px;
+
+        }
+        /* Labels */
+label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+/* Inputs & Select */
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    background: black;
+    color: white;
+    
+    transition: 0.3s;
+}
+
+input::placeholder {
+    color: green;
+}
+
+/* Focus Effects */
+input:focus, select:focus {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* Gender Radio Buttons */
+.gender-options {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.gender-options input {
+    width: auto;
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Button Styles */
+.btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+/* Button Colors */
+.btn-add {
+    background: #28a745; /* Green */
+    color: white;
+}
+
+.btn-search {
+    background: #007bff; /* Blue */
+    color: white;
+}
+
+.btn-update {
+    background: #ff9800; /* Orange */
+    color: white;
+}
+
+/* Button Hover Effects */
+.btn:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" onclick="toggleMenu()"> ☰ </button>
+    <nav class="sidebar">
+        <ul>
+            <li onclick="toggleSubMenu('admissions-sub')">Admissions
+                <ul id="admissions-sub" class="submenu">
+                    <li class="sub-item" onclick="openSection('new-student')">New Student</li>
+                    <li class="sub-item" onclick="openSection('requirements')">Requirements</li>
+                    <li class="sub-item" onclick="openSection('application')">Application</li>
+                </ul>
+            </li>
+            <li onclick="toggleSubMenu('exams-sub')">Exams
+                <ul id="exams-sub" class="submenu">
+                    <li class="sub-item" onclick="openSection('results')">Results</li>
+                    <li class="sub-item" onclick="openSection('schedules')">Schedules</li>
+                </ul>
+            </li>
+            <li onclick="toggleSubMenu('fees-sub')">Fees
+                <ul id="fees-sub" class="submenu">
+                    <li class="sub-item" onclick="openSection('payment')">Payment</li>
+                    <li class="sub-item" onclick="openSection('balance')">Balance</li>
+                </ul>
+            </li>
+            <li onclick="toggleSubMenu('activities-sub')">Activities
+                <ul id="activities-sub" class="submenu">
+                    <li class="sub-item" onclick="openSection('sports')">Sports</li>
+                    <li class="sub-item" onclick="openSection('clubs')">Clubs</li>
+                </ul>
+            </li>
+            <li onclick="toggleSubMenu('noticeboard-sub')">Noticeboard
+                <ul id="noticeboard-sub" class="submenu">
+                    <li class="sub-item" onclick="openSection('announcements')">Announcements</li>
+                    <li class="sub-item" onclick="openSection('events')">Events</li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <div class="content">
+        <div class="header">St Francis Shikoti Mixed and Senior Secondary School</div>
+        <div id="new-student" class="section">
+           <div class="form-container">
+        <h3>Admission of New Students</h3>
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="code">Admission Number:</label>
+                <input type="text" id="code" placeholder="Enter Adm Number" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Student Name:</label>
+                <input type="text" id="name" placeholder="Enter Student Name" required>
+            </div>
+            <div class="form-group">
+                <label for="dob">Date of Birth:</label>
+                <input type="date" id="dob" required>
+            </div>
+            <div class="form-group">
+                <label>Gender:</label>
+                <div class="gender-options">
+                    <input type="radio" id="male" name="gender" value="Male" required>
+                    <label for="male">Male</label>
+                    <input type="radio" id="female" name="gender" value="Female">
+                    <label for="female">Female</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="parentName">Parent Name:</label>
+                <input type="text" id="parentName" placeholder="Enter Parent Name" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" placeholder="Enter Phone Number" required>
+            </div>
+            <div class="form-group">
+                <label for="parentPhone">Parent Phone Number:</label>
+                <input type="text" id="parentPhone" placeholder="Enter Parent's Phone Number" required>
+            </div>
+            <div class="form-group">
+                <label for="grade">Grade:</label>
+                <select id="grade" required>
+                    <option value="">Select Grade</option>
+                    <option value="Grade1">Grade 1</option>
+                    <option value="Grade2">Grade 2</option>
+                    <option value="Grade3">Grade 3</option>
+                    <option value="Grade4">Grade 4</option>
+                    <option value="Grade5">Grade 5</option>
+                    <option value="Grade6">Grade 6</option>
+                    <option value="Grade7">Grade 7</option>
+                    <option value="Grade8">Grade 8</option>
+                    <option value="Grade9">Grade 9</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="status">Status:</label>
+                <select id="status" required>
+                    <option value="">Select Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" placeholder="Enter Amount" required>
+            </div>
+
+            <!-- Buttons in a horizontal layout -->
+            <div class="button-group">
+                <button type="button" class="btn btn-add">Add</button>
+                <button type="button" class="btn btn-search">Search</button>
+                <button type="button" class="btn btn-update">Update</button>
+            </div>
+        </form>
+    </div>
+           
+        </div>
+        <div id="requirements" class="section">Requirements Section</div>
+        <div id="application" class="section">Application Section</div>
+        <div id="results" class="section">Results Section</div>
+        <div id="schedules" class="section">Schedules Section</div>
+        <div id="payment" class="section">Payment Section</div>
+        <div id="balance" class="section">Balance Section</div>
+        <div id="sports" class="section">Sports Section</div>
+        <div id="clubs" class="section">Clubs Section</div>
+        <div id="announcements" class="section">Announcements Section</div>
+        <div id="events" class="section">Events Section</div>
+    </div>
+    <script>
+        function toggleMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.style.left = sidebar.style.left === '0px' ? '-260px' : '0px';
+        }
+        function toggleSubMenu(id) {
+            const submenu = document.getElementById(id);
+            submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+        }
+        function openSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(sectionId).style.display = 'block';
+            if (window.innerWidth <= 768) {
+                toggleMenu();
+            }
+        }
+    </script>
+</body>
+</html>
