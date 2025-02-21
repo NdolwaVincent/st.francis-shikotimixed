@@ -7,14 +7,21 @@
     <link rel="stylesheet" href="styles.css">
     <script defer src="script.js"></script>
     <style>
-        body {
+        
+        * {
+            box-sizing: border-box;
             margin: 0;
-             font-family: 'Poppins', sans-serif;
+            padding: 0;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
             background: #f4f4f4;
             display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
         .sidebar {
-            width: auto;
+            width: 260px;
             height: 100vh;
             background: #34495e;
             color: white;
@@ -42,10 +49,6 @@
             padding-left: 20px;
             background: #2c3e50;
         }
-        .submenu .sub-item {
-            cursor: pointer;
-            padding: 10px;
-        }
         .sidebar ul li:hover .submenu {
             display: block;
         }
@@ -53,6 +56,7 @@
             margin-left: 260px;
             padding: 20px;
             flex-grow: 1;
+            max-width: 100%;
         }
         .header {
             background: #2c3e50;
@@ -64,7 +68,7 @@
         }
         .menu-toggle {
             display: none;
-            position: absolute;
+            position: fixed;
             top: 15px;
             left: 15px;
             font-size: 24px;
@@ -72,6 +76,41 @@
             color: white;
             background: green;
             border: none;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .section {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                left: -260px;
+                width: 260px;
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                height: 100vh;
+                transition: left 0.3s ease;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .content {
+                margin-left: 0;
+                padding: 10px;
+            }
         }
         .section {
             display: none;
@@ -80,7 +119,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        @media (max-width: 100%) {
+        @media (max-width: 768px) {
             .sidebar {
                 left: -260px;
             }
@@ -95,7 +134,7 @@
 .form-container {
     background: #ffffff;
     padding: 25px;
-    width: auto;
+    width: 400px;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
