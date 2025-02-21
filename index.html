@@ -91,97 +91,115 @@
                 margin-left: 0;
             }
         }
+        /* Form Container */
+.form-container {
+    background: #ffffff;
+    padding: 25px;
+    width: 400px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
 
-        .new-student {
-           max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px 0px #aaa;
-            margin-top: 20px;
+/* Form Title */
+.form-container h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #333;
+}
 
-        }
-        /* Labels */
-label {
-     font-size: 1rem;
+/* Form Group */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #444;
+}
+
+/* Input Fields */
+.form-group input,
+.form-group select {
+    padding: 10px;
     font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: border 0.3s;
 }
 
-/* Inputs & Select */
-input, select {
-    width: 100%;
-    padding: 12px;
-    border-radius: 7px;
-    font-size: 16px;
-    background: white;
-    padding: 15px;
-    color: black;
-    transition: 0.3s;
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #007bff;
 }
 
-input::placeholder {
-    color: black;
-}
-
-/* Focus Effects */
-input:focus, select:focus {
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
-}
-
-/* Gender Radio Buttons */
+/* Gender Options */
 .gender-options {
     display: flex;
     gap: 15px;
     align-items: center;
 }
 
-.gender-options input {
-    width: auto;
+.gender-options label {
+    font-weight: normal;
+    color: #555;
 }
 
 /* Button Group */
 .button-group {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
-    margin-top: 15px;
+    margin-top: 20px;
 }
 
-/* Button Styles */
 .btn {
     flex: 1;
-    padding: 12px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
     border: none;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: 0.3s ease-in-out;
 }
 
-/* Button Colors */
+.btn:not(:last-child) {
+    margin-right: 10px;
+}
+
+/* Button Styles */
 .btn-add {
-    background: #28a745; /* Green */
+    background: #28a745;
     color: white;
+}
+
+.btn-add:hover {
+    background: #218838;
 }
 
 .btn-search {
-    background: #007bff; /* Blue */
+    background: #ffc107;
     color: white;
+}
+
+.btn-search:hover {
+    background: #e0a800;
 }
 
 .btn-update {
-    background: #ff9800; /* Orange */
+    background: #007bff;
     color: white;
 }
 
-/* Button Hover Effects */
-.btn:hover {
-    opacity: 0.8;
-    transform: scale(1.05);
+.btn-update:hover {
+    background: #0056b3;
 }
+
     </style>
 </head>
 <body>
@@ -288,7 +306,121 @@ input:focus, select:focus {
             </div>
         </form>
     </div>
-           
+            <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js';
+        import { getDatabase, ref, set, get, update } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6k4OlLYnotuuChAjLBoHmqfv9-iwrlfY",
+            authDomain: "alfajiri-database.firebaseapp.com",
+            databaseURL: "https://alfajiri-database-default-rtdb.firebaseio.com",
+            projectId: "alfajiri-database",
+            storageBucket: "alfajiri-database.appspot.com",
+            messagingSenderId: "310417854615",
+            appId: "1:310417854615:web:6f65002a119caeaf9119d2",
+            measurementId: "G-21TBZCRBHM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        document.addEventListener("DOMContentLoaded", function () {
+    const database = getDatabase();
+
+    // Function to validate form fields
+    function validateForm() {
+        const code = document.getElementById('code').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const dob = document.getElementById('dob').value;
+        const gender = document.querySelector('input[name="gender"]:checked');
+        const parent = document.getElementById('parentName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const grade = document.getElementById('grade').value;
+        const status = document.getElementById('status').value;
+
+        if (!code || !name || !dob || !gender || !parent || !phone || !grade || !status) {
+            alert("All fields are required!");
+            return false;
+        }
+        return true;
+    }
+
+    // Add student to Firebase
+    document.querySelector('.btn-add').addEventListener('click', () => {
+        if (!validateForm()) return;
+        
+        const code = document.getElementById('code').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const dob = document.getElementById('dob').value;
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+        const parent = document.getElementById('parentName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const grade = document.getElementById('grade').value;
+        const status = document.getElementById('status').value;
+
+        set(ref(database, `NewDatabase/${grade}/Students/${code}`), {
+            code, name, dob, gender, parent, phone, grade, status
+        }).then(() => alert('Student added successfully!'))
+          .catch(error => alert('Error: ' + error.message));
+    });
+
+    // Search student by Admission Number or Name
+    document.querySelector('.btn-search').addEventListener('click', () => {
+        const searchCode = document.getElementById('code').value.trim();
+        const searchName = document.getElementById('name').value.trim().toLowerCase();
+        const grade = document.getElementById('grade').value;
+
+        if (!searchCode && !searchName) {
+            alert("Enter Admission Number or Student Name to search.");
+            return;
+        }
+
+        get(ref(database, `NewDatabase/${grade}/Students/`)).then(snapshot => {
+            if (snapshot.exists()) {
+                const students = snapshot.val();
+                let found = false;
+
+                Object.values(students).forEach(student => {
+                    if (student.code === searchCode || student.name.toLowerCase() === searchName) {
+                        document.getElementById('name').value = student.name;
+                        document.getElementById('dob').value = student.dob;
+                        document.getElementById(student.gender.toLowerCase()).checked = true;
+                        document.getElementById('parentName').value = student.parent;
+                        document.getElementById('phone').value = student.phone;
+                        document.getElementById('grade').value = student.grade;
+                        document.getElementById('status').value = student.status;
+                        found = true;
+                    }
+                });
+
+                if (!found) alert("Student not found in the selected grade.");
+            } else {
+                alert("No students found in this grade.");
+            }
+        }).catch(error => alert("Error: " + error.message));
+    });
+
+    // Update student data
+    document.querySelector('.btn-update').addEventListener('click', () => {
+        if (!validateForm()) return;
+        
+        const code = document.getElementById('code').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const dob = document.getElementById('dob').value;
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+        const parent = document.getElementById('parentName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const grade = document.getElementById('grade').value;
+        const status = document.getElementById('status').value;
+
+        update(ref(database, `NewDatabase/${grade}/Students/${code}`), {
+            name, dob, gender, parent, phone, status
+        }).then(() => alert('Student updated successfully!'))
+          .catch(error => alert('Error: ' + error.message));
+    });
+});
+
+        
+    </script>
         </div>
         <div id="requirements" class="section">Requirements Section</div>
         <div id="application" class="section">Application Section</div>
