@@ -17,6 +17,7 @@
             font-family: 'Poppins', sans-serif;
             background: #f4f4f4;
             display: flex;
+            font-size: 12px;
             flex-direction: column;
             overflow-x: hidden;
         }
@@ -246,7 +247,7 @@
             <li onclick="toggleSubMenu('admissions-sub')">Admissions
                 <ul id="admissions-sub" class="submenu">
                     <li class="sub-item" onclick="openSection('new-student')">New Student</li>
-                    <li class="sub-item" onclick="openSection('requirements')">Requirements</li>
+                    <li class="sub-item" onclick="openSection('requirements')">All Students</li>
                     <li class="sub-item" onclick="openSection('application')">Application</li>
                 </ul>
             </li>
@@ -459,7 +460,117 @@
         
     </script>
         </div>
-        <div id="requirements" class="section">Requirements Section</div>
+        <div id="requirements" class="section">
+             <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js';
+        import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6k4OlLYnotuuChAjLBoHmqfv9-iwrlfY",
+            authDomain: "alfajiri-database.firebaseapp.com",
+            databaseURL: "https://alfajiri-database-default-rtdb.firebaseio.com",
+            projectId: "alfajiri-database",
+            storageBucket: "alfajiri-database.appspot.com",
+            messagingSenderId: "310417854615",
+            appId: "1:310417854615:web:6f65002a119caeaf9119d2",
+            measurementId: "G-21TBZCRBHM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("fetchStudents").addEventListener("click", fetchStudents);
+        });
+
+        function fetchStudents() {
+            const grade = document.getElementById("gradeSelect").value;
+            if (!grade) {
+                alert("Please select a grade.");
+                return;
+            }
+            
+            get(ref(database, `NewDatabase/${grade}/Students/`)).then(snapshot => {
+                if (snapshot.exists()) {
+                    const students = snapshot.val();
+                    displayStudents(students);
+                } else {
+                    alert("No students found in this grade.");
+                    document.getElementById("studentsTableBody").innerHTML = "";
+                }
+            }).catch(error => alert("Error: " + error.message));
+        }
+
+        function displayStudents(students) {
+            const tableBody = document.getElementById("studentsTableBody");
+            tableBody.innerHTML = "";
+            Object.values(students).forEach(student => {
+                const row = `<tr>
+                    <td>${student.code}</td>
+                    <td>${student.name}</td>
+                    <td>${student.dob}</td>
+                    <td>${student.gender}</td>
+                    <td>${student.parent}</td>
+                    <td>${student.phone}</td>
+                    <td>${student.status}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h2>All Students</h2>
+    <label for="gradeSelect">Select Grade:</label>
+    <select id="gradeSelect">
+        <option value="">--Select Grade--</option>
+        <option value="Grade1">Grade 1</option>
+        <option value="Grade2">Grade 2</option>
+        <option value="Grade3">Grade 3</option>
+        <option value="Grade4">Grade 4</option>
+        <option value="Grade5">Grade 5</option>
+        <option value="Grade6">Grade 6</option>
+        <option value="Grade7">Grade 7</option>
+        <option value="Grade8">Grade 8</option>
+        <option value="Grade9">Grade 9</option>
+    </select>
+    <button id="fetchStudents">Fetch Students</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Admission Number</th>
+                <th>Name</th>
+                <th>Date of Birth</th>
+                <th>Gender</th>
+                <th>Parent Name</th>
+                <th>Phone</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="studentsTableBody">
+        </tbody>
+    </table>
+        </div>
         <div id="application" class="section">Application Section</div>
         <div id="results" class="section">Results Section</div>
         <div id="schedules" class="section">Schedules Section</div>
