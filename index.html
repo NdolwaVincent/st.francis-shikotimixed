@@ -365,12 +365,167 @@
       </section>
 
       <!-- All Users Section -->
-      <section id="users" class="tab-content hidden">
-        <h2 class="text-xl font-semibold mb-4">👥 All Users</h2>
-        <div class="bg-white p-4 rounded shadow">
-          <p>List of all users with details.</p>
-        </div>
-      </section>
+     <section id="users" class="tab-content hidden">
+  <h2 class="text-xl font-semibold mb-4 text-center">👥 All Users</h2>
+  <div class="bg-white p-4 rounded shadow max-w-7xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+      <input type="text" id="searchInput" placeholder="Search by name, phone, email..."
+        class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-md shadow-sm" />
+      <div class="text-gray-700 text-sm font-semibold">
+        Total Users: <span id="totalUsers" class="text-blue-600">0</span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+      <table class="w-full min-w-[950px] text-left text-gray-700 text-[13px] font-[Times New Roman]">
+        <thead class="bg-blue-100 text-gray-800 font-semibold">
+          <tr>
+            <th class="border px-3 py-2">#</th>
+            <th class="border px-3 py-2">Name</th>
+            <th class="border px-3 py-2">Phone</th>
+            <th class="border px-3 py-2">Email</th>
+            <th class="border px-3 py-2">Password</th>
+            <th class="border px-3 py-2">Referral Code</th>
+            <th class="border px-3 py-2">Referred By</th>
+            <th class="border px-3 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase + Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get, child, update, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtB199eH6fONCftI_B6IDP80_0Tv2dFN8",
+      authDomain: "m-sales-45b35.firebaseapp.com",
+      databaseURL: "https://m-sales-45b35-default-rtdb.firebaseio.com",
+      projectId: "m-sales-45b35",
+      storageBucket: "m-sales-45b35.appspot.com",
+      messagingSenderId: "194892525308",
+      appId: "1:194892525308:web:c01af3028c85abdb97f179"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db);
+
+    const userTableBody = document.getElementById("userTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const totalUsers = document.getElementById("totalUsers");
+
+    let allUsers = [];
+
+    async function fetchUsers() {
+      const snapshot = await get(child(dbRef, "users"));
+      if (snapshot.exists()) {
+        allUsers = Object.entries(snapshot.val()).map(([phone, data]) => ({ phone, ...data }));
+        renderTable(allUsers);
+        totalUsers.textContent = allUsers.length;
+      } else {
+        userTableBody.innerHTML = "<tr><td colspan='8' class='text-center py-4'>No users found.</td></tr>";
+        totalUsers.textContent = 0;
+      }
+    }
+
+    function renderTable(users) {
+      userTableBody.innerHTML = "";
+      users.forEach((user, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="border px-3 py-2">${index + 1}</td>
+          <td class="border px-3 py-2">
+            <input id="name-${user.phone}" value="${user.name || ''}" class="w-full bg-yellow-50 px-2 py-1 border rounded" readonly />
+          </td>
+          <td class="border px-3 py-2">
+            <input id="phone-${user.phone}" value="${user.phone}" class="w-full bg-yellow-50 px-2 py-1 border rounded" readonly />
+          </td>
+          <td class="border px-3 py-2">
+            <input id="email-${user.phone}" value="${user.email || ''}" class="w-full bg-yellow-50 px-2 py-1 border rounded" readonly />
+          </td>
+          <td class="border px-3 py-2">
+            <div class="flex items-center gap-2">
+              <input id="pass-${user.phone}" type="password" value="${user.password}" class="w-full bg-yellow-50 px-2 py-1 border rounded" readonly />
+              <button onclick="togglePassword('${user.phone}')" class="text-blue-500 hover:underline text-xs">Show</button>
+            </div>
+          </td>
+          <td class="border px-3 py-2">
+            <input id="refcode-${user.phone}" value="${user.refcode || ''}" class="w-full bg-yellow-50 px-2 py-1 border rounded" readonly />
+          </td>
+          <td class="border px-3 py-2">
+            <input id="referred-${user.phone}" value="${user.referredBy || ''}" class="w-full bg-yellow-50 px-2 py-1 border rounded" readonly />
+          </td>
+          <td class="border px-3 py-2 space-x-1">
+            <button id="editBtn-${user.phone}" onclick="enableEdit('${user.phone}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded">Edit</button>
+            <button id="saveBtn-${user.phone}" onclick="saveUser('${user.phone}')" class="hidden bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded">Save</button>
+            <button onclick="deleteUser('${user.phone}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">Delete</button>
+          </td>
+        `;
+        userTableBody.appendChild(row);
+      });
+    }
+
+    window.togglePassword = function (phone) {
+      const passInput = document.getElementById(`pass-${phone}`);
+      passInput.type = passInput.type === "password" ? "text" : "password";
+    };
+
+    window.enableEdit = function (phone) {
+      ["name", "email", "pass", "refcode", "referred", "phone"].forEach(field => {
+        document.getElementById(`${field}-${phone}`).removeAttribute("readonly");
+      });
+      document.getElementById(`editBtn-${phone}`).classList.add("hidden");
+      document.getElementById(`saveBtn-${phone}`).classList.remove("hidden");
+    };
+
+    window.saveUser = async function (originalPhone) {
+      const name = document.getElementById(`name-${originalPhone}`).value;
+      const email = document.getElementById(`email-${originalPhone}`).value;
+      const password = document.getElementById(`pass-${originalPhone}`).value;
+      const refcode = document.getElementById(`refcode-${originalPhone}`).value;
+      const referredBy = document.getElementById(`referred-${originalPhone}`).value;
+      const newPhone = document.getElementById(`phone-${originalPhone}`).value;
+
+      const newUserData = { name, email, password, refcode, referredBy };
+
+      if (originalPhone !== newPhone) {
+        await remove(ref(db, `users/${originalPhone}`));
+      }
+
+      await set(ref(db, `users/${newPhone}`), newUserData);
+      alert("User updated!");
+      fetchUsers();
+    };
+
+    window.deleteUser = async function (phone) {
+      if (confirm("Delete this user?")) {
+        await remove(ref(db, `users/${phone}`));
+        alert("User deleted!");
+        fetchUsers();
+      }
+    };
+
+    searchInput.addEventListener("input", (e) => {
+      const keyword = e.target.value.toLowerCase();
+      const filtered = allUsers.filter(u =>
+        (u.name && u.name.toLowerCase().includes(keyword)) ||
+        (u.phone && u.phone.toLowerCase().includes(keyword)) ||
+        (u.email && u.email.toLowerCase().includes(keyword)) ||
+        (u.refcode && u.refcode.toLowerCase().includes(keyword)) ||
+        (u.referredBy && u.referredBy.toLowerCase().includes(keyword))
+      );
+      renderTable(filtered);
+      totalUsers.textContent = filtered.length;
+    });
+
+    fetchUsers();
+  </script>
+</section>
+
 
       <!-- Messages Section -->
       <section id="messages" class="tab-content hidden">
