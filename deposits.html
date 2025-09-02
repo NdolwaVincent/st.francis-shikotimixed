@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deposit Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <section id="deposit" class="section">
+    <h2 class="text-3xl font-bold text-center mb-6 text-blue-700">Deposit Management</h2>
+    <div class="bg-white rounded-xl shadow-md p-6 w-full max-w-4xl mx-auto space-y-6">
+
+      <!-- Deposit Form -->
+      <div>
+        <h3 class="text-xl font-semibold mb-4">New Deposit</h3>
+        <label class="text-sm text-gray-700 font-medium mb-2 block">Quick Amount</label>
+        <div id="quickAmounts" class="grid grid-cols-3 gap-2 mb-4"></div>
+        <form id="paymentForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <input id="amountInput" type="number" placeholder="Enter deposit amount"
+              class="w-full border rounded-lg p-2.5 text-gray-700 focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <input id="phoneInput" type="tel" value="07"
+              class="w-full border rounded-lg p-2.5 text-gray-700 focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <button type="submit"
+            class="w-full bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition">
+            Save Deposit
+          </button>
+        </form>
+        <p id="statusMsg" class="text-center mt-4 font-semibold text-sm"></p>
+      </div>
+
+      <!-- Search -->
+      <div class="flex justify-between items-center mt-6">
+        <h3 class="text-xl font-semibold">Saved Deposits</h3>
+        <input id="searchInput" type="text" placeholder="Search deposits..."
+          class="border rounded-lg p-2 text-gray-700 focus:ring-2 focus:ring-blue-500 w-64"/>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full border text-sm text-left">
+          <thead class="bg-gray-100 text-gray-700">
+            <tr>
+              <th class="border p-2">Phone</th>
+              <th class="border p-2">Amount</th>
+              <th class="border p-2">Reference</th>
+              <th class="border p-2">Provider</th>
+              <th class="border p-2">Timestamp</th>
+              <th class="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="depositTable" class="divide-y"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+      <h2 class="text-xl font-bold text-blue-700 mb-4">Edit Deposit</h2>
+      <form id="editForm" class="space-y-4">
+        <input type="hidden" id="editId">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+          <input id="editPhone" type="tel"
+            class="w-full border rounded-lg p-2.5 text-gray-700 focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+          <input id="editAmount" type="number"
+            class="w-full border rounded-lg p-2.5 text-gray-700 focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" id="cancelEdit" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtB199eH6fONCftI_B6IDP80_0Tv2dFN8",
+      authDomain: "m-sales-45b35.firebaseapp.com",
+      databaseURL: "https://m-sales-45b35-default-rtdb.firebaseio.com",
+      projectId: "m-sales-45b35",
+      storageBucket: "m-sales-45b35.appspot.com",
+      messagingSenderId: "194892525308",
+      appId: "1:194892525308:web:c01af3028c85abdb97f179"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const depositTable = document.getElementById("depositTable");
+    const editModal = document.getElementById("editModal");
+    const editForm = document.getElementById("editForm");
+    const cancelEdit = document.getElementById("cancelEdit");
+    const searchInput = document.getElementById("searchInput");
+
+    // Quick Amounts
+    const quickAmountsContainer = document.getElementById('quickAmounts');
+    const amounts = [750, 1000, 2500, 5000, 7500, 10000];
+    amounts.forEach(amount => {
+      const btn = document.createElement('button');
+      btn.className = 'bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded text-sm';
+      btn.textContent = amount.toLocaleString();
+      btn.onclick = () => document.getElementById('amountInput').value = amount;
+      quickAmountsContainer.appendChild(btn);
+    });
+
+    // Save Deposit
+    document.getElementById("paymentForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const phone = document.getElementById("phoneInput").value.trim();
+      const amount = parseFloat(document.getElementById("amountInput").value.trim());
+      if (!phone || !amount || amount <= 0) return;
+
+      push(ref(db, "payments"), {
+        phone,
+        amount,
+        reference: "ref_" + Date.now(),
+        provider: "Manual",
+        timestamp: new Date().toISOString()
+      });
+
+      document.getElementById("phoneInput").value = "07";
+      document.getElementById("amountInput").value = "";
+    });
+
+    // Fetch Deposits
+    let deposits = {};
+    onValue(ref(db, "payments"), snapshot => {
+      deposits = snapshot.val() || {};
+      renderTable();
+    });
+
+    // Render with Search
+    function renderTable() {
+      const query = searchInput.value.toLowerCase();
+      depositTable.innerHTML = "";
+      Object.entries(deposits).forEach(([id, data]) => {
+        if (
+          data.phone.toLowerCase().includes(query) ||
+          String(data.amount).includes(query) ||
+          (data.reference && data.reference.toLowerCase().includes(query)) ||
+          (data.provider && data.provider.toLowerCase().includes(query))
+        ) {
+          const row = `
+            <tr>
+              <td class="border p-2">${data.phone}</td>
+              <td class="border p-2">KES ${data.amount}</td>
+              <td class="border p-2">${data.reference || "-"}</td>
+              <td class="border p-2">${data.provider || "-"}</td>
+              <td class="border p-2">${new Date(data.timestamp).toLocaleString()}</td>
+              <td class="border p-2 flex gap-2">
+                <button class="bg-blue-500 text-white px-2 py-1 rounded text-xs" onclick="editDeposit('${id}','${data.phone}','${data.amount}')">Edit</button>
+                <button class="bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="deleteDeposit('${id}')">Delete</button>
+              </td>
+            </tr>
+          `;
+          depositTable.innerHTML += row;
+        }
+      });
+    }
+
+    searchInput.addEventListener("input", renderTable);
+
+    // Expose edit/delete globally
+    window.editDeposit = (id, phone, amount) => {
+      document.getElementById("editId").value = id;
+      document.getElementById("editPhone").value = phone;
+      document.getElementById("editAmount").value = amount;
+      editModal.classList.remove("hidden");
+    };
+
+    window.deleteDeposit = id => {
+      if (confirm("Delete this deposit?")) {
+        remove(ref(db, "payments/" + id));
+      }
+    };
+
+    // Update
+    editForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const id = document.getElementById("editId").value;
+      const phone = document.getElementById("editPhone").value;
+      const amount = document.getElementById("editAmount").value;
+      update(ref(db, "payments/" + id), { phone, amount })
+        .then(() => editModal.classList.add("hidden"));
+    });
+
+    cancelEdit.addEventListener("click", () => editModal.classList.add("hidden"));
+  </script>
+</body>
+</html>
