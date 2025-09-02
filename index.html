@@ -372,7 +372,7 @@
   <h2 class="text-xl font-semibold mb-4 text-center">👥 All Users</h2>
   <div class="bg-white p-4 rounded shadow max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-      <input type="text" id="searchInput" placeholder="Search by name, phone, email..."
+      <input type="text" id="searchInput" placeholder="Search by name or phone..."
         class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-md shadow-sm" />
       <div class="text-gray-700 text-sm font-semibold">
         Total Users: <span id="totalUsers" class="text-blue-600">0</span>
@@ -512,22 +512,33 @@
       }
     };
 
+    // Debounced Search
+    let searchTimeout;
     searchInput.addEventListener("input", (e) => {
-      const keyword = e.target.value.toLowerCase();
-      const filtered = allUsers.filter(u =>
-        (u.name && u.name.toLowerCase().includes(keyword)) ||
-        (u.phone && u.phone.toLowerCase().includes(keyword)) ||
-        (u.email && u.email.toLowerCase().includes(keyword)) ||
-        (u.refcode && u.refcode.toLowerCase().includes(keyword)) ||
-        (u.referredBy && u.referredBy.toLowerCase().includes(keyword))
-      );
-      renderTable(filtered);
-      totalUsers.textContent = filtered.length;
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const keyword = e.target.value.trim().toLowerCase();
+        if (!keyword) {
+          renderTable(allUsers);
+          totalUsers.textContent = allUsers.length;
+          return;
+        }
+        const filtered = allUsers.filter(u =>
+          (u.name && u.name.toLowerCase().includes(keyword)) ||
+          (u.phone && u.phone.toLowerCase().includes(keyword)) ||
+          (u.email && u.email.toLowerCase().includes(keyword)) ||
+          (u.refcode && u.refcode.toLowerCase().includes(keyword)) ||
+          (u.referredBy && u.referredBy.toLowerCase().includes(keyword))
+        );
+        renderTable(filtered);
+        totalUsers.textContent = filtered.length;
+      }, 300);
     });
 
     fetchUsers();
   </script>
 </section>
+
 
 
       <!-- Messages Section -->
@@ -557,4 +568,5 @@
   </script>
 </body>
 </html>
+
 
