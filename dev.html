@@ -7,23 +7,55 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://applet.payherokenya.com/cdn/button_sdk.js?v=3.1"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div class="bg-white shadow-lg p-6 rounded-lg max-w-md w-full text-center">
-    <h1 class="text-2xl font-bold text-green-700 mb-4">Daily Access Payment</h1>
-    <p class="mb-3">Pay KES 200 daily to access your dashboard.</p>
+<body class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen flex items-center justify-center font-sans">
 
-    <input id="phone" type="text" placeholder="Enter phone number" class="border w-full p-2 rounded mb-3" />
-    <input id="amount" type="number" placeholder="Enter amount (min 200)" class="border w-full p-2 rounded mb-3" />
-    <button onclick="makePayment()" class="bg-green-600 text-white px-4 py-2 rounded w-full">Proceed to Pay</button>
+  <div class="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md transition-transform hover:scale-[1.01]">
+    <!-- Header -->
+    <div class="mb-6 text-center">
+      <h1 class="text-3xl font-extrabold text-green-700 tracking-tight">20X Access Payment</h1>
+      <p class="text-gray-600 mt-2 text-sm">
+        Pay <span class="font-semibold text-green-700">KES 200 daily</span> to keep your access active.
+      </p>
+    </div>
 
-    <div id="payHero" class="mt-4"></div>
-    <p id="status" class="mt-3 text-gray-700 font-medium"></p>
+    <!-- Form -->
+    <div class="space-y-4">
+      <div>
+        <label for="phone" class="block text-sm font-medium text-gray-700 text-left">Phone Number</label>
+        <input id="phone" type="text" placeholder="e.g. 07XXXXXXXX"
+          class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-800">
+      </div>
+
+      <div>
+        <label for="amount" class="block text-sm font-medium text-gray-700 text-left">Amount (KES)</label>
+        <input id="amount" type="number" placeholder="Minimum 200"
+          class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-800">
+      </div>
+
+      <button id="payBtn"
+        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition duration-200 ease-in-out shadow-md">
+        Proceed to Pay
+      </button>
+    </div>
+
+    <!-- PayHero Container -->
+    <div id="payHero" class="mt-6"></div>
+
+    <!-- Status / Loading Section -->
+    <div class="mt-5 text-center">
+      <p id="status" class="text-gray-600 text-sm font-medium"></p>
+      <div id="loader" class="hidden mt-3 flex justify-center">
+        <div class="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    </div>
   </div>
+
+  <!-- JS Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, push, set, get, update, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // 🔥 Firebase Configuration
+    // 🔥 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBtB199eH6fONCftI_B6IDP80_0Tv2dFN8",
       authDomain: "m-sales-45b35.firebaseapp.com",
@@ -36,19 +68,32 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const status = document.getElementById("status");
 
-    // ✅ Fixed access code
     const FIXED_ACCESS_CODE = "778899";
 
+    const payBtn = document.getElementById("payBtn");
+    const status = document.getElementById("status");
+    const loader = document.getElementById("loader");
+
+    // ✅ Make Payment
     window.makePayment = () => {
       const phone = document.getElementById("phone").value.trim();
       const amount = parseFloat(document.getElementById("amount").value.trim());
 
-      if (!phone || amount < 2) {
-        alert("Enter valid phone and amount (min KES 2)");
+      if (!phone || !/^07\d{8}$/.test(phone)) {
+        status.textContent = "⚠️ Please enter a valid Safaricom phone number.";
+        status.classList.add("text-red-600");
         return;
       }
+
+      if (isNaN(amount) || amount < 200) {
+        status.textContent = "⚠️ Minimum payment is KES 200.";
+        status.classList.add("text-red-600");
+        return;
+      }
+
+      loader.classList.remove("hidden");
+      status.textContent = "Initializing payment...";
 
       PayHero.init({
         paymentUrl: "https://app.payhero.co.ke/lipwa/1068",
@@ -64,61 +109,59 @@
         buttonColor: "#00a884"
       });
 
-      status.textContent = "Waiting for payment confirmation...";
+      status.textContent = "Awaiting payment confirmation...";
     };
 
-    // ✅ When PayHero confirms success
+    payBtn.addEventListener("click", makePayment);
+
+    // ✅ Handle Payment Success
     window.addEventListener("message", async (event) => {
       if (!event.data?.paymentSuccess) return;
 
-      const payment = event.data;
+      loader.classList.remove("hidden");
+      status.textContent = "✅ Payment confirmed. Updating your access...";
+
       const phone = document.getElementById("phone").value.trim();
       const amount = parseFloat(document.getElementById("amount").value.trim());
-
       const daysPaid = Math.floor(amount / 2);
       const today = new Date();
 
-      // 🔍 Check if user already has an active record
-      const userRef = ref(db, "DailyPayments/" + phone);
-      const snapshot = await get(userRef);
-
+      const codeRef = ref(db, "DailyPayments/" + FIXED_ACCESS_CODE);
+      const snapshot = await get(codeRef);
       let newExpiry;
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
-        const oldExpiry = new Date(userData.expiry);
-        const now = new Date();
 
-        // Extend expiry if still active, otherwise start from today
-        if (oldExpiry > now) {
+      if (snapshot.exists()) {
+        const oldExpiry = new Date(snapshot.val().expiry);
+        if (oldExpiry > today) {
           oldExpiry.setDate(oldExpiry.getDate() + daysPaid);
           newExpiry = oldExpiry;
         } else {
-          newExpiry = new Date();
-          newExpiry.setDate(today.getDate() + daysPaid);
+          newExpiry = new Date(today.setDate(today.getDate() + daysPaid));
         }
       } else {
-        newExpiry = new Date();
-        newExpiry.setDate(today.getDate() + daysPaid);
+        newExpiry = new Date(today.setDate(today.getDate() + daysPaid));
       }
 
-      // ✅ Save or update payment in Firebase
-      await set(userRef, {
-        phone,
-        amount,
-        daysPaid,
-        expiry: newExpiry.toISOString(),
+      // ✅ Save or Update under fixed code
+      await set(codeRef, {
         code: FIXED_ACCESS_CODE,
-        provider: payment.provider || "PayHero",
-        providerRef: payment.providerReference || "N/A",
-        lastPayment: today.toISOString()
+        expiry: newExpiry.toISOString(),
+        lastPayment: new Date().toISOString(),
+        lastAmount: amount,
+        lastPhoneUsed: phone,
+        topUpDays: daysPaid
       });
 
-      // Save locally
+      // Save locally for session
       localStorage.setItem("accessCode", FIXED_ACCESS_CODE);
-      localStorage.setItem("phone", phone);
+      localStorage.setItem("expiry", newExpiry.toISOString());
 
-      status.textContent = `✅ Payment Successful! Access valid until ${newExpiry.toDateString()}`;
-      setTimeout(() => (window.location.href = "main.html"), 3000);
+      loader.classList.add("hidden");
+      status.classList.remove("text-red-600");
+      status.classList.add("text-green-700");
+      status.textContent = `✅ Payment successful! Access extended until ${newExpiry.toDateString()}`;
+
+      setTimeout(() => (window.location.href = "main.html"), 2500);
     });
   </script>
 </body>
