@@ -86,8 +86,8 @@
         return;
       }
 
-      if (isNaN(amount) || amount < 200) {
-        status.textContent = "⚠️ Minimum payment is KES 200.";
+      if (isNaN(amount) || amount <1000) {
+        status.textContent = "⚠️ Minimum payment is KES 1000.";
         status.classList.add("text-red-600");
         return;
       }
@@ -123,7 +123,7 @@
 
       const phone = document.getElementById("phone").value.trim();
       const amount = parseFloat(document.getElementById("amount").value.trim());
-      const daysPaid = Math.floor(amount / 2);
+      const daysPaid = Math.floor(amount / 1000);
       const today = new Date();
 
       const codeRef = ref(db, "DailyPayments/" + FIXED_ACCESS_CODE);
@@ -161,7 +161,7 @@
       status.classList.add("text-green-700");
       status.textContent = `✅ Payment successful! Access extended until ${newExpiry.toDateString()}`;
 
-      setTimeout(() => (window.location.href = "main.html"), 2500);
+      setTimeout(() => (window.location.href = "index.html"), 2500);
     });
   </script>
 </body>
